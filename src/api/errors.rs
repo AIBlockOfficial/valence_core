@@ -1,5 +1,6 @@
 use warp::hyper::StatusCode;
 
+/// API Error structure
 #[derive(Debug, Clone)]
 pub struct ApiError {
     pub code: StatusCode,
@@ -27,6 +28,22 @@ impl std::fmt::Display for ApiError {
 
 impl warp::reject::Reject for ApiError {}
 
+/// Constructs an internal server error response for the API
+/// 
+/// ### Arguments
+/// 
+/// * `error` - Error message
+/// * `route` - Route where the error occurred
+pub fn construct_result_error(error: &str, route: &str) -> ApiError {
+    ApiError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        ApiErrorType::Generic(error.to_string()),
+        "0".to_string(),
+        route.to_string(),
+    )
+}
+
+/// API Error types
 #[derive(Debug, Clone)]
 pub enum ApiErrorType {
     Generic(String),

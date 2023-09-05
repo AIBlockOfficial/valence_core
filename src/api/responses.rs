@@ -2,7 +2,7 @@ use crate::api::errors::ApiErrorType;
 use serde::Serialize;
 use warp::hyper::StatusCode;
 
-/*------- JSON HANDLING --------*/
+//====== JSON HANDLING ======//
 
 /// A JSON formatted reply.
 #[derive(Debug, Clone)]
@@ -57,7 +57,7 @@ pub fn json_embed(value: &[&[u8]]) -> JsonReply {
     JsonReply::new(value.iter().copied().flatten().copied().collect())
 }
 
-/*------- API RESPONSE HANDLING --------*/
+//====== API RESPONSE HANDLING ======//
 
 /// Call response structure, with handling for errors and ok responses.
 #[derive(Debug, Clone)]
@@ -182,11 +182,3 @@ pub fn common_error_reply(
     )
     .with_code(status)
 }
-
-// Handles optional response content. Defaults to null if None provided
-// fn optional_content_default(content: Option<JsonReply>) -> JsonReply {
-//     match content {
-//         Some(c) => c,
-//         None => json_serialize_embed("null"),
-//     }
-//}
