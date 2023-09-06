@@ -29,9 +29,9 @@ impl std::fmt::Display for ApiError {
 impl warp::reject::Reject for ApiError {}
 
 /// Constructs an internal server error response for the API
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// * `error` - Error message
 /// * `route` - Route where the error occurred
 pub fn construct_result_error(error: &str, route: &str) -> ApiError {
