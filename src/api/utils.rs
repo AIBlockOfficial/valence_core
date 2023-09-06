@@ -83,6 +83,7 @@ pub fn sig_verify_middleware() -> impl Filter<Extract = ((),), Error = Rejection
                         return Ok(());
                     }
 
+                    println!("Signature verification failed");
                     Err(warp::reject::custom(ApiErrorType::InvalidSignature))
                 }
             },
@@ -90,6 +91,10 @@ pub fn sig_verify_middleware() -> impl Filter<Extract = ((),), Error = Rejection
 }
 
 /// Rejection handler
+/// 
+/// ### Arguments
+/// 
+/// * `err` - Rejection error
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     if let Some(ApiErrorType::InvalidSignature) = err.find() {
         // Handle invalid signature error here
@@ -98,6 +103,7 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             warp::http::StatusCode::BAD_REQUEST,
         ))
     } else {
+        println!("Internal Server Error: {:?}", err);
         // For other kinds of rejections, return a generic error
         Ok(warp::reply::with_status(
             "Internal Server Error",
@@ -107,6 +113,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
 }
 
 /// Map API result to warp reply
+/// 
+/// ### Arguments
+/// 
+/// * `r` - API Future result
 pub fn map_api_res(
     r: impl Future<Output = Result<JsonReply, JsonReply>>,
 ) -> impl Future<Output = Result<impl warp::Reply, warp::Rejection>> {

@@ -52,10 +52,15 @@ impl KvStoreConnection for MongoDbConn {
             .database(&self.index.db_name)
             .collection::<Document>(&self.index.coll_name);
 
-        let document = mongodb::bson::to_document(&value)?;
+        let document = match mongodb::bson::to_document(&value) {
+            Ok(document) => document,
+            Err(e) => panic!("Failed to serialize data with error: {e}"),
+        };
+
+        println!("Document: {:?}", document);
 
         let filter = doc! { "_id": key };
-        collection
+        match collection
             .replace_one(
                 filter,
                 document.clone(),
@@ -63,7 +68,10 @@ impl KvStoreConnection for MongoDbConn {
                     .upsert(true)
                     .build(),
             )
-            .await?;
+            .await {
+            Ok(_) => (),
+            Err(e) => panic!("Failed to set data with error: {e}"),
+            };
 
         Ok(())
     }
@@ -79,9 +87,9 @@ impl KvStoreConnection for MongoDbConn {
 
         if let Some(document) = result {
             let deserialized: T = mongodb::bson::from_document(document)?;
-            Ok(Some(deserialized))
-        } else {
-            Ok(None)
+            return Ok(Some(deserialized));
         }
+        
+        Ok(None)
     }
 }
