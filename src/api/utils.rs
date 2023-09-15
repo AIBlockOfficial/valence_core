@@ -79,11 +79,9 @@ pub fn sig_verify_middleware() -> impl Filter<Extract = ((),), Error = Rejection
 
                     if validate_signature(public_key, address, signature) {
                         // Proceed to the next filter/handler
-                        println!("Signature verified");
                         return Ok(());
                     }
 
-                    println!("Signature verification failed");
                     Err(warp::reject::custom(ApiErrorType::InvalidSignature))
                 }
             },
