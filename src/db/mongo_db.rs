@@ -20,7 +20,7 @@ pub struct MongoDbConn {
 
 #[async_trait]
 impl KvStoreConnection for MongoDbConn {
-    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         // Tracing
         let span = span!(Level::TRACE, "MongoDbConn::init");
         let _enter = span.enter();
@@ -51,7 +51,7 @@ impl KvStoreConnection for MongoDbConn {
         &mut self,
         key: &str,
         value: T,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Tracing
         let span = span!(Level::TRACE, "MongoDbConn::set_data");
         let _enter = span.enter();
@@ -95,7 +95,7 @@ impl KvStoreConnection for MongoDbConn {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>> {
         // Tracing
         let span = span!(Level::TRACE, "MongoDbConn::get_data");
         let _enter = span.enter();

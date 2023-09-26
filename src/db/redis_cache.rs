@@ -10,7 +10,7 @@ pub struct RedisCacheConn {
 
 #[async_trait]
 impl KvStoreConnection for RedisCacheConn {
-    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let redis_client = redis::Client::open(url)?;
         let redis_connection_manager = ConnectionManager::new(redis_client).await?;
 
@@ -23,7 +23,7 @@ impl KvStoreConnection for RedisCacheConn {
         &mut self,
         key: &str,
         value: T,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let serialized_data = serialize_data(&value);
         let _: () = self.connection.set(key, serialized_data).await?;
         Ok(())
@@ -32,7 +32,7 @@ impl KvStoreConnection for RedisCacheConn {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>> {
         let result: Option<String> = self.connection.get(key).await?;
 
         if let Some(data) = result {

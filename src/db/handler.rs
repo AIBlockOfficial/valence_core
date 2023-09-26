@@ -9,7 +9,7 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `url` - A string slice that holds the URL to connect to
-    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>>
+    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>>
     where
         Self: Sized;
 
@@ -23,7 +23,7 @@ pub trait KvStoreConnection {
         &mut self,
         key: &str,
         value: T,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Gets a data entry from the cache
     ///
@@ -33,5 +33,5 @@ pub trait KvStoreConnection {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error>>;
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
 }
