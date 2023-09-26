@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use serde::{ de::DeserializeOwned, Serialize };
+use serde::{de::DeserializeOwned, Serialize};
 
 /// Trait for a key-value data store connection
 #[async_trait]
@@ -9,7 +9,9 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `url` - A string slice that holds the URL to connect to
-    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>> where Self: Sized;
+    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>>
+    where
+        Self: Sized;
 
     /// Sets a data entry in the cache
     ///
@@ -20,7 +22,7 @@ pub trait KvStoreConnection {
     async fn set_data<T: Serialize + Send>(
         &mut self,
         key: &str,
-        value: T
+        value: T,
     ) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Gets a data entry from the cache
@@ -28,5 +30,8 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `key` - Key of the data entry to get
-    async fn get_data<T: DeserializeOwned>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error>>;
+    async fn get_data<T: DeserializeOwned>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error>>;
 }

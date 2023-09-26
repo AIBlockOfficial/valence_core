@@ -72,8 +72,9 @@ The `weaver_core` library exposes a few common methods and functionalities that 
 
 ### Further Work
 
-- [ ] Add tests
-- [ ] Consider abstraction structure for API and DB handling
+- [x] Add tests
+- [x] Consider abstraction structure for API and DB handling
+- [ ] Add traces
 
 <p align="left">(<a href="#top">back to top</a>)</p>
 

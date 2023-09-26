@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use mongodb::bson::{doc, Document};
 use mongodb::{options::ClientOptions, Client};
 use serde::{de::DeserializeOwned, Serialize};
+use tracing::{event, span, trace, warn, Level};
 
 use super::handler::KvStoreConnection;
 
@@ -20,15 +21,23 @@ pub struct MongoDbConn {
 #[async_trait]
 impl KvStoreConnection for MongoDbConn {
     async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        // Tracing
+        let span = span!(Level::TRACE, "MongoDbConn::init");
+        let _enter = span.enter();
+
         let client_options = match ClientOptions::parse(url).await {
             Ok(client_options) => client_options,
             Err(e) => panic!("Failed to connect to MongoDB instance with error: {e}"),
         };
 
+        trace!("Connected to MongoDB instance at {url}");
+
         let client = match Client::with_options(client_options) {
             Ok(client) => client,
             Err(e) => panic!("Failed to connect to MongoDB instance with error: {e}"),
         };
+
+        trace!("MongoDB client created successfully");
 
         let index = MongoDbIndex {
             db_name: String::from("default"),
@@ -43,6 +52,10 @@ impl KvStoreConnection for MongoDbConn {
         key: &str,
         value: T,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        // Tracing
+        let span = span!(Level::TRACE, "MongoDbConn::set_data");
+        let _enter = span.enter();
+
         let collection = self
             .client
             .database(&self.index.db_name)
@@ -50,10 +63,11 @@ impl KvStoreConnection for MongoDbConn {
 
         let document = match mongodb::bson::to_document(&value) {
             Ok(document) => document,
-            Err(e) => panic!("Failed to serialize data with error: {e}"),
+            Err(e) => {
+                event!(Level::ERROR, "Failed to serialize data with error: {e}");
+                panic!("Failed to serialize data with error: {e}");
+            }
         };
-
-        println!("Document: {:?}", document);
 
         let filter = doc! { "_id": key };
         match collection
@@ -64,15 +78,28 @@ impl KvStoreConnection for MongoDbConn {
                     .upsert(true)
                     .build(),
             )
-            .await {
+            .await
+        {
             Ok(_) => (),
-            Err(e) => panic!("Failed to set data with error: {e}"),
-            };
+            Err(e) => {
+                event!(Level::ERROR, "Failed to set data with error: {e}");
+                panic!("Failed to set data with error: {e}");
+            }
+        };
+
+        trace!("Data set successfully");
 
         Ok(())
     }
 
-    async fn get_data<T: DeserializeOwned>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error>> {
+    async fn get_data<T: DeserializeOwned>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error>> {
+        // Tracing
+        let span = span!(Level::TRACE, "MongoDbConn::get_data");
+        let _enter = span.enter();
+
         let collection = self
             .client
             .database(&self.index.db_name)
@@ -81,11 +108,15 @@ impl KvStoreConnection for MongoDbConn {
         let filter = doc! { "_id": key };
         let result = collection.find_one(filter, None).await?;
 
+        trace!("Data retrieved successfully");
+
         if let Some(document) = result {
             let deserialized: T = mongodb::bson::from_document(document)?;
             return Ok(Some(deserialized));
         }
-        
+
+        warn!("Data unsuccessfully deserialized");
+
         Ok(None)
     }
 }
