@@ -14,8 +14,10 @@
 
   <h3>weaver_core</h3>
 
+<div>
+<img src="https://img.shields.io/github/actions/workflow/status/ABlockOfficial/weaver_core/rust.yml" alt="Pipeline Status" style="display:inline-block"/>
+</div>
   <!-- <div>
-  <img src="https://img.shields.io/github/actions/workflow/status/Zenotta/Intercom/codeql-analysis.yml?branch=main" alt="Pipeline Status" />
     <img src="https://img.shields.io/github/package-json/v/Zenotta/Intercom" />
   </div> -->
 
