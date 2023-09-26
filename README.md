@@ -33,6 +33,18 @@
 
 <!-- GETTING STARTED -->
 
+## 🎉 Plug-ins Using weaver_core
+
+Here you can find awesome plug-ins already using `weaver_core` to boost their Weaver nodes:
+
+- **[weaver_market](https://github.com/ABlockOfficial/weaver_market)**: Build a web3 marketplace in seconds
+
+If you'd like to have your plug-in added to the list, please open a PR and we'll be happy to take a look!
+
+<p align="left">(<a href="#top">back to top</a>)</p>
+
+..
+
 ## How to Use
 
 `weaver_core` is designed to be used as a core crate for Weaver functionality that is common across all node types and plug-ins. It is not designed to be used as a standalone crate, and will not compile as such.
