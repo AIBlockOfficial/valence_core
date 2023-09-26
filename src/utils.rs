@@ -50,6 +50,6 @@ mod tests {
         //
         // Assert
         //
-        assert_eq!(result, true);
+        assert!(result);
     }
 }
