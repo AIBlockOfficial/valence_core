@@ -19,11 +19,7 @@ pub struct MongoDbConn {
 
 #[async_trait]
 impl KvStoreConnection for MongoDbConn {
-    type ConnectionResult = MongoDbConn;
-    type SetDataResult = Result<(), mongodb::error::Error>;
-    type GetDataResult<T> = Result<Option<T>, mongodb::error::Error>;
-
-    async fn init(url: &str) -> Self::ConnectionResult {
+    async fn init(url: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let client_options = match ClientOptions::parse(url).await {
             Ok(client_options) => client_options,
             Err(e) => panic!("Failed to connect to MongoDB instance with error: {e}"),
@@ -39,14 +35,14 @@ impl KvStoreConnection for MongoDbConn {
             coll_name: String::from("default"),
         };
 
-        MongoDbConn { client, index }
+        Ok(MongoDbConn { client, index })
     }
 
     async fn set_data<T: Serialize + std::marker::Send>(
         &mut self,
         key: &str,
         value: T,
-    ) -> Self::SetDataResult {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let collection = self
             .client
             .database(&self.index.db_name)
@@ -76,7 +72,7 @@ impl KvStoreConnection for MongoDbConn {
         Ok(())
     }
 
-    async fn get_data<T: DeserializeOwned>(&mut self, key: &str) -> Self::GetDataResult<T> {
+    async fn get_data<T: DeserializeOwned>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error>> {
         let collection = self
             .client
             .database(&self.index.db_name)

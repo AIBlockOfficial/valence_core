@@ -28,3 +28,28 @@ pub fn serialize_data<T: Serialize>(data: &T) -> String {
 pub fn deserialize_data<T: for<'a> Deserialize<'a>>(data: String) -> T {
     serde_json::from_str(&data).unwrap()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_validate_correct_signature() {
+        //
+        // Arrange
+        // 
+        let public_key = "a1c03c87549f1cb6f277f24e65111736c1faa8c47d20f3cf8ebaa595c252503c";
+        let msg = "Hello World!";
+        let signature = "f4873d6b68c1b09779bf0290d70322f1e7c8e5cf9a1f5c7cec97bb47623e122b944030bebfff82a3c991230a5c2c26ee0b71c2824b80069e5c5c0b702e69bf01";
+
+        //
+        // Act
+        // 
+        let result = validate_signature(public_key, msg, signature);
+
+        //
+        // Assert
+        //
+        assert_eq!(result, true);
+    }
+}
