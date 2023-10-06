@@ -35,3 +35,14 @@ pub trait KvStoreConnection {
         key: &str,
     ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
 }
+
+#[async_trait]
+pub trait CacheHandler {
+    /// Sets an expiration time for a data entry
+    /// 
+    /// ### Arguments
+    /// 
+    /// * `key` - Key of the data entry to expire
+    /// * `seconds` - Number of seconds to expire the data entry in
+    async fn expire_entry(&mut self, key: &str, seconds: usize) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}
