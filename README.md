@@ -17,9 +17,9 @@
 <div>
 <img src="https://img.shields.io/github/actions/workflow/status/ABlockOfficial/valence_core/.github/workflows/rust.yml?branch=main" alt="Pipeline Status" style="display:inline-block"/>
 </div>
-  <!-- <div>
-    <img src="https://img.shields.io/github/package-json/v/Zenotta/Intercom" />
-  </div> -->
+  <div>
+    <img src="https://img.shields.io/crates/v/valence_core" />
+  </div>
 
   <p align="center">
     The core library used by all <a href="https://github.com/ABlockOfficial/Valence">Valence</a> nodes and their plug-ins
