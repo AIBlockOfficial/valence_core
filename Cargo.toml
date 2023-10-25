@@ -1,5 +1,5 @@
 [package]
-name = "weaver_core"
+name = "valence_core"
 version = "0.1.0"
 edition = "2021"
 

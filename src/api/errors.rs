@@ -67,7 +67,7 @@ impl std::fmt::Display for ApiErrorType {
             }
             ApiErrorType::CuckooFilterLookupFailed => write!(
                 f,
-                "Cuckoo filter lookup failed, data for address not found on this Weaver"
+                "Cuckoo filter lookup failed, data for address not found on this Valence"
             ),
             ApiErrorType::DataSerializationFailed => write!(f, "Data serialization failed"),
         }
