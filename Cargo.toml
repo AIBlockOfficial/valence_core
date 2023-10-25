@@ -2,6 +2,13 @@
 name = "valence_core"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+keywords = ["blockchain", "L2", "peer-to-peer", "P2P"]
+readme = "README.md"
+description = "Core module used across plug-ins for A-Block Valence nodes"
+homepage = "https://a-block.io"
+documentation = "https://a-block.io"
+repository = "https://github.com/ABlockOfficial/valence_core"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
