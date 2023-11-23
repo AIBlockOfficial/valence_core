@@ -1,4 +1,4 @@
-use crate::db::handler::{KvStoreConnection, CacheHandler}; 
+use crate::db::handler::{CacheHandler, KvStoreConnection};
 use crate::utils::{deserialize_data, serialize_data};
 use async_trait::async_trait;
 use redis::{aio::ConnectionManager, AsyncCommands};
@@ -11,7 +11,11 @@ pub struct RedisCacheConn {
 
 #[async_trait]
 impl CacheHandler for RedisCacheConn {
-    async fn expire_entry(&mut self, key: &str, seconds: usize) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn expire_entry(
+        &mut self,
+        key: &str,
+        seconds: usize,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.connection.expire(key, seconds).await?;
         Ok(())
     }
