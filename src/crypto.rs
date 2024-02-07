@@ -1,5 +1,5 @@
 pub use ring;
-pub use serde;
+use tracing::warn;
 use std::convert::TryInto;
 
 pub mod sign_ed25519 {
@@ -11,6 +11,7 @@ pub mod sign_ed25519 {
     pub use ring::signature::{ED25519, ED25519_PUBLIC_KEY_LEN};
     use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
+    use tracing::warn;
 
     pub type PublicKeyBase = <SecretKey as KeyPair>::PublicKey;
 
@@ -28,6 +29,12 @@ pub mod sign_ed25519 {
         #[serde(deserialize_with = "deserialize_slice")]
         [u8; ED25519_SIGNATURE_LEN],
     );
+
+    impl Default for Signature {
+        fn default() -> Self {
+            Self([0; ED25519_SIGNATURE_LEN])
+        }
+    }
 
     impl Signature {
         pub fn from_slice(slice: &[u8]) -> Option<Self> {
@@ -49,6 +56,12 @@ pub mod sign_ed25519 {
         #[serde(deserialize_with = "deserialize_slice")]
         [u8; ED25519_PUBLIC_KEY_LEN],
     );
+
+    impl Default for PublicKey {
+        fn default() -> Self {
+            Self([0; ED25519_PUBLIC_KEY_LEN])
+        }
+    }
 
     impl PublicKey {
         pub fn from_slice(slice: &[u8]) -> Option<Self> {
@@ -86,14 +99,34 @@ pub mod sign_ed25519 {
     }
 
     pub fn sign_detached(msg: &[u8], sk: &SecretKey) -> Signature {
-        let secret = SecretKeyBase::from_pkcs8(sk.as_ref()).unwrap();
-        Signature(secret.sign(msg).as_ref().try_into().unwrap())
+        let secret = match SecretKeyBase::from_pkcs8(sk.as_ref()) {
+            Ok(secret) => secret,
+            Err(_) => {
+                warn!("Invalid secret key");
+                return Signature([0; ED25519_SIGNATURE_LEN]);
+            }
+        };
+
+        let signature = match secret.sign(msg).as_ref().try_into() {
+            Ok(signature) => signature,
+            Err(_) => {
+                warn!("Invalid signature");
+                return Signature([0; ED25519_SIGNATURE_LEN]);
+            }
+        };
+        Signature(signature)
     }
 
     pub fn verify_append(sm: &[u8], pk: &PublicKey) -> bool {
         if sm.len() > ED25519_SIGNATURE_LEN {
             let start = sm.len() - ED25519_SIGNATURE_LEN;
-            let sig = Signature(sm[start..].try_into().unwrap());
+            let sig = Signature(match sm[start..].try_into() {
+                Ok(sig) => sig,
+                Err(_) => {
+                    warn!("Invalid signature");
+                    return false
+                }
+            });
             let msg = &sm[..start];
             verify_detached(&sig, msg, pk)
         } else {
@@ -110,10 +143,38 @@ pub mod sign_ed25519 {
 
     pub fn gen_keypair() -> (PublicKey, SecretKey) {
         let rand = ring::rand::SystemRandom::new();
-        let pkcs8 = SecretKeyBase::generate_pkcs8(&rand).unwrap();
-        let secret = SecretKeyBase::from_pkcs8(pkcs8.as_ref()).unwrap();
-        let public = PublicKey(secret.public_key().as_ref().try_into().unwrap());
-        let secret = SecretKey::from_slice(pkcs8.as_ref()).unwrap();
+        let pkcs8 = match SecretKeyBase::generate_pkcs8(&rand) {
+            Ok(pkcs8) => pkcs8,
+            Err(_) => {
+                warn!("Failed to generate secret key base for pkcs8");
+                return (PublicKey([0; ED25519_PUBLIC_KEY_LEN]), SecretKey(vec![]));
+            }
+        };
+
+        let secret = match SecretKeyBase::from_pkcs8(pkcs8.as_ref()) {
+            Ok(secret) => secret,
+            Err(_) => {
+                warn!("Invalid secret key base");
+                return (PublicKey([0; ED25519_PUBLIC_KEY_LEN]), SecretKey(vec![]));
+            }
+        };
+
+        let pub_key_gen = match secret.public_key().as_ref().try_into() {
+            Ok(pub_key_gen) => pub_key_gen,
+            Err(_) => {
+                warn!("Invalid public key generation");
+                return (PublicKey([0; ED25519_PUBLIC_KEY_LEN]), SecretKey(vec![]));
+            }
+        };
+        let public = PublicKey(pub_key_gen);
+        let secret = match SecretKey::from_slice(pkcs8.as_ref()) {
+            Some(secret) => secret,
+            None => {
+                warn!("Invalid secret key");
+                return (PublicKey([0; ED25519_PUBLIC_KEY_LEN]), SecretKey(vec![]));
+            }
+        };
+
         (public, secret)
     }
 }
@@ -218,6 +279,7 @@ pub mod pbkdf2 {
     use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
     use std::num::NonZeroU32;
+    use tracing::warn;
 
     pub const SALT_LEN: usize = 256 / 8;
     pub const OPSLIMIT_INTERACTIVE: u32 = 100_000;
@@ -242,12 +304,34 @@ pub mod pbkdf2 {
     }
 
     pub fn derive_key(key: &mut [u8], passwd: &[u8], salt: &Salt, iterations: u32) {
-        let iterations = NonZeroU32::new(iterations).unwrap();
+        let iterations = match NonZeroU32::new(iterations) {
+            Some(iterations) => iterations,
+            None => {
+                warn!("Invalid iterations in key derivation");
+                return;
+            }
+        };
         derive(PBKDF2_HMAC_SHA256, iterations, salt.as_ref(), passwd, key);
     }
 
     pub fn gen_salt() -> Salt {
         Salt(generate_random())
+    }
+}
+
+pub mod sha3_256 {
+    pub use sha3::digest::Output;
+    pub use sha3::Digest;
+    pub use sha3::Sha3_256;
+
+    pub fn digest(data: &[u8]) -> Output<Sha3_256> {
+        Sha3_256::digest(data)
+    }
+
+    pub fn digest_all<'a>(data: impl Iterator<Item = &'a [u8]>) -> Output<Sha3_256> {
+        let mut hasher = Sha3_256::new();
+        data.for_each(|v| hasher.update(v));
+        hasher.finalize()
     }
 }
 
@@ -265,7 +349,10 @@ pub fn generate_random<const N: usize>() -> [u8; N] {
 
     use ring::rand::SecureRandom;
     let rand = ring::rand::SystemRandom::new();
-    rand.fill(&mut value).unwrap();
+    match rand.fill(&mut value) {
+        Ok(_) => (),
+        Err(_) => warn!("Failed to generate random bytes")
+    };
 
     value
 }

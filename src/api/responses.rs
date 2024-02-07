@@ -49,7 +49,7 @@ pub fn json_embed_transaction(value: Vec<u8>) -> JsonReply {
 
 /// Embed serialized JSON into wrapping JSON
 pub fn json_serialize_embed<T: Serialize>(value: T) -> JsonReply {
-    JsonReply::new(serde_json::to_vec(&value).unwrap())
+    JsonReply::new(serde_json::to_vec(&value).unwrap_or_default())
 }
 
 /// Embed JSON into wrapping JSON
