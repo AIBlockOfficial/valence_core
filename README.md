@@ -60,7 +60,7 @@ Otherwise, add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-valence_core = "0.1.0"
+valence_core = "0.1.2"
 ```
 
 <p align="left">(<a href="#top">back to top</a>)</p>
