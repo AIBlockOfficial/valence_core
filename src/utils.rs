@@ -1,6 +1,7 @@
 use crate::crypto::sign_ed25519 as sign;
 use crate::crypto::sign_ed25519::{PublicKey, Signature};
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 
 /// Function to validate the signature using Ed25519
 ///
@@ -17,24 +18,35 @@ pub fn validate_signature(public_key: &str, msg: &str, signature: &str) -> bool 
         return false;
     }
 
-    let pk = PublicKey::from_slice(&pk_decode.unwrap());
-    let signature = Signature::from_slice(&sig_decode.unwrap());
+    let pk = PublicKey::from_slice(&pk_decode.unwrap_or_default());
+    let signature = Signature::from_slice(&sig_decode.unwrap_or_default());
 
     if pk.is_none() || signature.is_none() {
+        warn!("Failed to decode public key or signature");
         return false;
     }
 
-    sign::verify_detached(&signature.unwrap(), msg.as_bytes(), &pk.unwrap())
+    sign::verify_detached(
+        &signature.unwrap_or_default(),
+        msg.as_bytes(),
+        &pk.unwrap_or_default(),
+    )
 }
 
 /// Function to serialize data
 pub fn serialize_data<T: Serialize>(data: &T) -> String {
-    serde_json::to_string(data).unwrap()
+    serde_json::to_string(data).unwrap_or_default()
 }
 
 /// Function to deserialize data
 pub fn deserialize_data<T: for<'a> Deserialize<'a>>(data: String) -> T {
-    serde_json::from_str(&data).unwrap()
+    match serde_json::from_str(&data) {
+        Ok(result) => result,
+        Err(_) => {
+            warn!("Failed to deserialize data");
+            serde_json::from_str("{}").unwrap()
+        }
+    }
 }
 
 #[cfg(test)]

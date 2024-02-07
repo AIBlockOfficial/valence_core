@@ -65,7 +65,7 @@ impl KvStoreConnection for MongoDbConn {
             Ok(document) => document,
             Err(e) => {
                 event!(Level::ERROR, "Failed to serialize data with error: {e}");
-                panic!("Failed to serialize data with error: {e}");
+                Document::new()
             }
         };
 
@@ -83,7 +83,6 @@ impl KvStoreConnection for MongoDbConn {
             Ok(_) => (),
             Err(e) => {
                 event!(Level::ERROR, "Failed to set data with error: {e}");
-                panic!("Failed to set data with error: {e}");
             }
         };
 

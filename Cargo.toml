@@ -1,6 +1,6 @@
 [package]
 name = "valence_core"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT"
 keywords = ["blockchain", "L2", "peer-to-peer", "P2P"]
@@ -24,3 +24,4 @@ serde_json = "1.0.103"
 hex = "0.4.3"
 cuckoofilter = "0.5.0"
 tracing = "0.1.37"
+sha3 = "0.10.8"
