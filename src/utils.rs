@@ -45,7 +45,7 @@ pub fn deserialize_data<T: for<'a> Deserialize<'a>>(data: String) -> T {
         Err(_) => {
             warn!("Failed to deserialize data");
             serde_json::from_str("{}").unwrap()
-        },
+        }
     }
 }
 
