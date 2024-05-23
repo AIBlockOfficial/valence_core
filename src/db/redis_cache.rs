@@ -98,7 +98,7 @@ impl KvStoreConnection for RedisCacheConn {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error + Send + Sync>> {
         // Check if the key exists
         let exists: bool = self.connection.exists(key).await?;
 

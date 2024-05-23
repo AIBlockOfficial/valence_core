@@ -215,7 +215,7 @@ impl KvStoreConnection for MongoDbConn {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error + Send + Sync>> {
         // Tracing
         let span = span!(Level::TRACE, "MongoDbConn::get_data");
         let _enter = span.enter();

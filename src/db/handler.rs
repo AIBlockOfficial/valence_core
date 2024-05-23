@@ -57,7 +57,7 @@ pub trait KvStoreConnection {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>>;
+    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 #[async_trait]
