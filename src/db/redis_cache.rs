@@ -42,6 +42,25 @@ impl KvStoreConnection for RedisCacheConn {
         Ok(())
     }
 
+    async fn set_data_with_expiry<T: Serialize + Send>(
+        &mut self,
+        key: &str,
+        value: T,
+        seconds: usize,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let serialized_data = serialize_data(&value);
+        let _: () = self.connection.set_ex(key, serialized_data, seconds).await?;
+        Ok(())
+    }
+
+    async fn delete_data(
+        &mut self,
+        key: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let _: () = self.connection.del(key).await?;
+        Ok(())
+    }
+
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,

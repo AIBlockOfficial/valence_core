@@ -72,4 +72,24 @@ mod tests {
         //
         assert!(result);
     }
+
+    #[test]
+    fn should_not_validate_incorrect_signature() {
+        //
+        // Arrange
+        //
+        let public_key = "2304667047f9ac074b2b062b46557e3283a1661d8348b3d6323490b9c8ccf978";
+        let msg = "18f70e4a53a7cfd7f82d0e1fc287a449872ec7489dba0dff86144df8609caeda";
+        let signature = "04e37549dcc0422237aa1e3c18b6a2cdb529831e8daad8ea4d3865cad149d50016e7b64cedf12c01fb5eb715b2e049bb3441eb6da9866ce1eef6071b38465808";
+
+        //
+        // Act
+        //
+        let result = validate_signature(public_key, msg, signature);
+
+        //
+        // Assert
+        //
+        assert!(!result);
+    }
 }

@@ -25,6 +25,30 @@ pub trait KvStoreConnection {
         value: T,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
+    /// Sets a data entry in the cache with an expiration time
+    /// 
+    /// ### Arguments
+    /// 
+    /// * `key` - Key of the data entry to set
+    /// * `value` - Value of the data entry to set
+    /// * `seconds` - Number of seconds to expire the data entry in
+    async fn set_data_with_expiry<T: Serialize + Send>(
+        &mut self,
+        key: &str,
+        value: T,
+        seconds: usize,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Deletes a data entry from the cache
+    /// 
+    /// ### Arguments
+    /// 
+    /// * `key` - Key of the data entry to delete
+    async fn delete_data(
+        &mut self,
+        key: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
     /// Gets a data entry from the cache
     ///
     /// ### Arguments

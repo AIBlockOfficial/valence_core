@@ -5,6 +5,7 @@ use std::convert::Infallible;
 use warp::{Filter, Future, Rejection, Reply};
 
 impl warp::reject::Reject for ApiErrorType {}
+use tracing::{debug, warn};
 
 /// Clone component/struct to use in route
 ///
@@ -61,27 +62,38 @@ pub fn sig_verify_middleware() -> impl Filter<Extract = ((),), Error = Rejection
         .and(warp::header::headers_cloned())
         .and_then(
             move |_: warp::path::FullPath, headers: warp::hyper::HeaderMap| {
+                debug!("Validating signature");
+
                 async move {
                     let public_key = headers
                         .get("public_key")
                         .and_then(|n| n.to_str().ok())
                         .unwrap_or_default();
 
+                    debug!("public_key: {:?}", public_key);
+
                     let address = headers
                         .get("address")
                         .and_then(|n| n.to_str().ok())
                         .unwrap_or_default();
+
+                    debug!("address: {:?}", address);
 
                     let signature = headers
                         .get("signature")
                         .and_then(|n| n.to_str().ok())
                         .unwrap_or_default();
 
+                    debug!("signature: {:?}", signature);
+
                     if validate_signature(public_key, address, signature) {
+                        debug!("Signature is valid");
+
                         // Proceed to the next filter/handler
                         return Ok(());
                     }
 
+                    warn!("Invalid signature");
                     Err(warp::reject::custom(ApiErrorType::InvalidSignature))
                 }
             },
