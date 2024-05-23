@@ -19,7 +19,9 @@ pub struct MongoDbConn {
 }
 
 impl MongoDbConn {
-    /// Creates a TTL index on the expiry field
+    /// Creates a TTL index on the expiry field.
+    ///
+    /// NOTE: This function will need to be called in the main function when initialising a MongoDB connection.
     pub async fn create_ttl_index(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let collection = self
             .client
@@ -70,7 +72,7 @@ impl KvStoreConnection for MongoDbConn {
         Ok(MongoDbConn { client, index })
     }
 
-    async fn set_data<T: Serialize + std::marker::Send>(
+    async fn set_data<T: Serialize + std::marker::Send + DeserializeOwned>(
         &mut self,
         key: &str,
         value: T,
@@ -84,20 +86,32 @@ impl KvStoreConnection for MongoDbConn {
             .database(&self.index.db_name)
             .collection::<Document>(&self.index.coll_name);
 
-        let document = match mongodb::bson::to_document(&value) {
-            Ok(document) => document,
-            Err(e) => {
-                event!(Level::ERROR, "Failed to serialize data with error: {e}");
-                Document::new()
-            }
+        // Check if the document with the given key exists
+        let filter = doc! { "_id": key };
+        let existing_doc = collection.find_one(filter.clone(), None).await?;
+
+        let mut vec: Vec<T> = if let Some(doc) = existing_doc {
+            // Deserialize the existing data
+            mongodb::bson::from_bson(doc.get("data").unwrap().clone())?
+        } else {
+            Vec::new()
         };
 
-        let filter = doc! { "_id": key };
+        // Append the new data to the vec
+        vec.push(value);
+
+        // Serialize the vec back to a BSON array
+        let serialized_vec = mongodb::bson::to_bson(&vec)?;
+
+        // Create or update the document
+        let update = doc! {
+            "$set": { "data": serialized_vec }
+        };
         match collection
-            .replace_one(
+            .update_one(
                 filter,
-                document.clone(),
-                mongodb::options::ReplaceOptions::builder()
+                update,
+                mongodb::options::UpdateOptions::builder()
                     .upsert(true)
                     .build(),
             )
@@ -109,12 +123,12 @@ impl KvStoreConnection for MongoDbConn {
             }
         };
 
-        trace!("Data set successfully");
+        trace!("Data set successfully with expiry");
 
         Ok(())
     }
 
-    async fn set_data_with_expiry<T: Serialize + std::marker::Send>(
+    async fn set_data_with_expiry<T: Serialize + std::marker::Send + DeserializeOwned>(
         &mut self,
         key: &str,
         value: T,
@@ -129,36 +143,43 @@ impl KvStoreConnection for MongoDbConn {
             .database(&self.index.db_name)
             .collection::<Document>(&self.index.coll_name);
 
-        let mut document = match mongodb::bson::to_document(&value) {
-            Ok(document) => document,
-            Err(e) => {
-                event!(Level::ERROR, "Failed to serialize data with error: {e}");
-                Document::new()
-            }
+        // Check if the document with the given key exists
+        let filter = doc! { "_id": key };
+        let existing_doc = collection.find_one(filter.clone(), None).await?;
+
+        let mut vec: Vec<T> = if let Some(doc) = existing_doc {
+            // Deserialize the existing data
+            mongodb::bson::from_bson(doc.get("data").unwrap().clone())?
+        } else {
+            Vec::new()
         };
 
-        let milli_expiry = (seconds * 1000) as i64;
-        let expiry_time = DateTime::from_millis(milli_expiry);
-        document.insert("_id", key);
-        document.insert("expiry", expiry_time);
+        // Append the new data to the vec
+        vec.push(value);
 
-        // Set the data with upsert option
-        let filter = doc! { "_id": key };
-        match collection
-            .replace_one(
+        // Serialize the vec back to a BSON array
+        let serialized_vec = mongodb::bson::to_bson(&vec)?;
+
+        // Calculate the expiry time
+        let expiry_time = (seconds * 1000) as i64;
+        let expiry_bson_datetime = DateTime::from_millis(expiry_time);
+
+        // Create or update the document with the new expiry time
+        let update = doc! {
+            "$set": {
+                "data": serialized_vec,
+                "expiry": expiry_bson_datetime,
+            }
+        };
+        collection
+            .update_one(
                 filter,
-                document.clone(),
-                mongodb::options::ReplaceOptions::builder()
+                update,
+                mongodb::options::UpdateOptions::builder()
                     .upsert(true)
                     .build(),
             )
-            .await
-        {
-            Ok(_) => (),
-            Err(e) => {
-                event!(Level::ERROR, "Failed to set data with error: {e}");
-            }
-        };
+            .await?;
 
         trace!("Data set successfully with expiry");
 
@@ -194,7 +215,7 @@ impl KvStoreConnection for MongoDbConn {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>> {
         // Tracing
         let span = span!(Level::TRACE, "MongoDbConn::get_data");
         let _enter = span.enter();
@@ -202,16 +223,22 @@ impl KvStoreConnection for MongoDbConn {
         let collection = self
             .client
             .database(&self.index.db_name)
-            .collection::<Document>(&self.index.coll_name); // Change to your actual collection name
+            .collection::<Document>(&self.index.coll_name);
 
+        // Check if the document with the given key exists
         let filter = doc! { "_id": key };
-        let result = collection.find_one(filter, None).await?;
+        let doc_find = match collection.find_one(filter.clone(), None).await {
+            Ok(doc) => doc,
+            Err(e) => {
+                event!(Level::ERROR, "Failed to get data with error: {e}");
+                return Ok(None);
+            }
+        };
 
-        trace!("Data retrieved successfully");
-
-        if let Some(document) = result {
-            let deserialized: T = mongodb::bson::from_document(document)?;
-            return Ok(Some(deserialized));
+        if let Some(doc) = doc_find {
+            // Deserialize the existing data
+            let vec: Vec<T> = mongodb::bson::from_bson(doc.get("data").unwrap().clone())?;
+            return Ok(Some(vec));
         }
 
         warn!("Data unsuccessfully deserialized");

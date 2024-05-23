@@ -19,20 +19,20 @@ pub trait KvStoreConnection {
     ///
     /// * `key` - Key of the data entry to set
     /// * `value` - Value of the data entry to set
-    async fn set_data<T: Serialize + Send>(
+    async fn set_data<T: Serialize + Send + DeserializeOwned>(
         &mut self,
         key: &str,
         value: T,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Sets a data entry in the cache with an expiration time
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// * `key` - Key of the data entry to set
     /// * `value` - Value of the data entry to set
     /// * `seconds` - Number of seconds to expire the data entry in
-    async fn set_data_with_expiry<T: Serialize + Send>(
+    async fn set_data_with_expiry<T: Serialize + DeserializeOwned + Send>(
         &mut self,
         key: &str,
         value: T,
@@ -40,9 +40,9 @@ pub trait KvStoreConnection {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Deletes a data entry from the cache
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// * `key` - Key of the data entry to delete
     async fn delete_data(
         &mut self,
@@ -57,7 +57,7 @@ pub trait KvStoreConnection {
     async fn get_data<T: DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>>;
 }
 
 #[async_trait]
