@@ -91,8 +91,12 @@ impl KvStoreConnection for MongoDbConn {
         let existing_doc = collection.find_one(filter.clone(), None).await?;
 
         let mut vec: Vec<T> = if let Some(doc) = existing_doc {
-            // Deserialize the existing data
-            mongodb::bson::from_bson(doc.get("data").unwrap().clone())?
+            if doc.contains_key("data") {
+                // Deserialize the existing data
+                mongodb::bson::from_bson(doc.get("data").unwrap().clone())?
+            } else {
+                Vec::new()
+            }
         } else {
             Vec::new()
         };
