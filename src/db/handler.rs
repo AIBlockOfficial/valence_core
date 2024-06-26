@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
+use std::collections::HashMap;
 
 /// Trait for a key-value data store connection
 #[async_trait]
@@ -18,10 +19,12 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `key` - Key of the data entry to set
+    /// * `value_id` - ID of the value to set
     /// * `value` - Value of the data entry to set
     async fn set_data<T: Serialize + Send + DeserializeOwned>(
         &mut self,
         key: &str,
+        value_id: &str,
         value: T,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
@@ -30,11 +33,13 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `key` - Key of the data entry to set
+    /// * `value_id` - ID of the value to set
     /// * `value` - Value of the data entry to set
     /// * `seconds` - Number of seconds to expire the data entry in
     async fn set_data_with_expiry<T: Serialize + DeserializeOwned + Send>(
         &mut self,
         key: &str,
+        value_id: &str,
         value: T,
         seconds: usize,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
@@ -44,9 +49,11 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `key` - Key of the data entry to delete
-    async fn delete_data(
+    /// * `value_id` - ID of the value to delete. If not provided, all values for the key are deleted
+    async fn del_data(
         &mut self,
         key: &str,
+        value_id: Option<&str>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Gets a data entry from the cache
@@ -54,10 +61,12 @@ pub trait KvStoreConnection {
     /// ### Arguments
     ///
     /// * `key` - Key of the data entry to get
-    async fn get_data<T: DeserializeOwned>(
+    /// * `value_id` - ID of the value to get. If not provided, all values for the key are retrieved
+    async fn get_data<T: Clone + DeserializeOwned>(
         &mut self,
         key: &str,
-    ) -> Result<Option<Vec<T>>, Box<dyn std::error::Error + Send + Sync>>;
+        value_id: Option<&str>,
+    ) -> Result<Option<HashMap<String, T>>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 #[async_trait]
