@@ -47,7 +47,7 @@ pub fn get_cors() -> warp::cors::Builder {
 }
 
 /// Easy and simple DELETE CORS
-pub fn delete_cors() -> warp::cors::Builder {
+pub fn del_cors() -> warp::cors::Builder {
     cors_builder(vec!["DELETE", "OPTIONS"])
 }
 

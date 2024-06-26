@@ -193,13 +193,13 @@ impl KvStoreConnection for MongoDbConn {
         Ok(())
     }
 
-    async fn delete_data(
+    async fn del_data(
         &mut self,
         key: &str,
         value_id: Option<&str>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Tracing
-        let span = span!(Level::TRACE, "MongoDbConn::delete_data");
+        let span = span!(Level::TRACE, "MongoDbConn::del_data");
         let _enter = span.enter();
 
         let collection = self

@@ -92,7 +92,7 @@ impl KvStoreConnection for RedisCacheConn {
         Ok(())
     }
 
-    async fn delete_data(
+    async fn del_data(
         &mut self,
         key: &str,
         value_id: Option<&str>,

@@ -50,7 +50,7 @@ pub trait KvStoreConnection {
     ///
     /// * `key` - Key of the data entry to delete
     /// * `value_id` - ID of the value to delete. If not provided, all values for the key are deleted
-    async fn delete_data(
+    async fn del_data(
         &mut self,
         key: &str,
         value_id: Option<&str>,
