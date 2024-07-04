@@ -53,6 +53,13 @@ pub enum ApiErrorType {
     CuckooFilterInsertionFailed,
     CuckooFilterLookupFailed,
     DataSerializationFailed,
+    DataDeserializationFailed,
+    DBQueryFailed,
+    CacheDeleteFailed,
+    ValueDeleteFailed,
+    CacheQueryFailed,
+    ValueIdNotFound,
+    DataNotFound,
 }
 
 impl std::fmt::Display for ApiErrorType {
@@ -70,6 +77,13 @@ impl std::fmt::Display for ApiErrorType {
                 "Cuckoo filter lookup failed, data for address not found on this Valence"
             ),
             ApiErrorType::DataSerializationFailed => write!(f, "Data serialization failed"),
+            ApiErrorType::DataDeserializationFailed => write!(f, "Data deserialization failed"),
+            ApiErrorType::DBQueryFailed => write!(f, "Data fetch on db failed"),
+            ApiErrorType::CacheQueryFailed => write!(f, "Data fetch on cache failed"),
+            ApiErrorType::CacheDeleteFailed => write!(f, "Cache deletion failed"),
+            ApiErrorType::ValueDeleteFailed => write!(f, "Value deletion failed"),
+            ApiErrorType::DataNotFound => write!(f, "Data not found"),
+            ApiErrorType::ValueIdNotFound => write!(f, "Value ID not found"),
         }
     }
 }
