@@ -32,6 +32,13 @@ fn cors_builder(methods: Vec<&str>) -> warp::cors::Builder {
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Headers",
             "Content-Type",
+            "public_key",
+            "address",
+            "signature",
+            "dnt",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
         ])
         .allow_methods(methods)
 }
